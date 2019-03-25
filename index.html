@@ -5,8 +5,7 @@ var load_t0 = performance.now();
 </script>
 </head>
 <body>
-<p>Loading...</p>
-<script src="shaderc.js"></script>
+<p>See console for info.</p>
 <script type="text/plain" id="vs">
 #version 310 es
 precision highp float;
@@ -428,40 +427,38 @@ layout(location=0) out vec4 outColor;
 
 void main( void ){vec4 color = vec4(0.0,0.0,0.0,1.0);mainImage( color, gl_FragCoord.xy );color.w = 1.0;outColor = color;}
 </script>
-<script>
-var source = document.getElementById("vs").innerText.trim();
-console.log(source);
+<script type="module">
+import Shaderc from './shaderc.js';
 
-var compiler, opts, result, binary;
+const source = document.getElementById("vs").innerText.trim();
 
-function test() {
-  compiler = new Module.Compiler();
+(async () => {
+  console.log("loading...");
+  const shaderc = await Shaderc;
+
+  console.log("wasm module loading took roughly " + (performance.now() - load_t0) + " ms");
+
+  const compiler = new shaderc.Compiler();
   console.log("compiler =", compiler);
-  opts = new Module.CompileOptions();
+  const opts = new shaderc.CompileOptions();
   console.log("opts =", opts);
 
   let compile_t0 = performance.now();
-  result = compiler.CompileGlslToSpv(source, Module.shader_kind.fragment, "", "main", opts);
+  const result = compiler.CompileGlslToSpv(source, shaderc.shader_kind.fragment, "", "main", opts);
   console.log("result =", result);
-  document.write("<p>shader compilation took " + (performance.now() - compile_t0) + " ms</p>");
+  console.log("shader compilation took " + (performance.now() - compile_t0) + " ms");
 
   console.log(result.GetErrorMessage());
-  binary = result.GetBinary();
+  const binary = result.GetBinary();
   console.log("binary =", binary.length, binary);
 
-  document.write("<p>To test, use the dev tools console to interact with: Module, compiler, opts, result, and binary.</p>");
-}
-
-function raf() {
-  if (Module.Compiler) {
-    document.write("<p>wasm module loading took roughly " + (performance.now() - load_t0) + " ms</p>");
-    test();
-  } else {
-    requestAnimationFrame(raf);
-  }
-}
-
-requestAnimationFrame(raf);
+  console.log("To experiment, use the dev tools console to interact with: shaderc, compiler, opts, result, and binary.");
+  window.shaderc = shaderc;
+  window.compiler = compiler;
+  window.opts = opts;
+  window.result = result;
+  window.binary = binary;
+})();
 </script>
 </body>
 </html>
